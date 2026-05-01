@@ -1,0 +1,2 @@
+-keep class jxl.** { *; }
+-dontwarn jxl.**
