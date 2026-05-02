@@ -1,25 +1,28 @@
 package com.csu.schedule.ui.screen.weekgrid
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -27,26 +30,24 @@ import com.csu.schedule.data.db.CourseEntity
 import com.csu.schedule.data.db.SemesterEntity
 import com.csu.schedule.ui.viewmodel.ImportState
 import com.csu.schedule.util.WeekCalculator
+import com.csu.schedule.util.rememberCurrentSlot
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeekGridScreen(
     semester: SemesterEntity?,
-    courses: List<CourseEntity>,
-    selectedWeek: Int,
     actualWeek: Int,
-    showWeekend: Boolean,
     importState: ImportState,
     onImportClick: () -> Unit,
-    onPreviousWeek: () -> Unit,
-    onNextWeek: () -> Unit,
-    onJumpToCurrentWeek: () -> Unit,
+    getCoursesForWeek: (Int) -> List<CourseEntity>,
     onCourseClick: (CourseEntity) -> Unit,
     onImportStateConsumed: () -> Unit,
     selectedCourse: CourseEntity?,
     onDismissDetail: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(importState) {
         when (importState) {
@@ -62,59 +63,68 @@ fun WeekGridScreen(
         }
     }
 
+    if (semester == null) {
+        Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+            EmptyState(
+                onImportClick = onImportClick,
+                modifier = Modifier.padding(padding)
+            )
+        }
+        return
+    }
+
+    val totalWeeks = semester.totalWeeks
+    val pagerState = rememberPagerState(
+        initialPage = (actualWeek - 1).coerceIn(0, totalWeeks - 1)
+    ) { totalWeeks }
+
+    val currentSlot by rememberCurrentSlot()
+
+    val displayWeek = pagerState.currentPage + 1
+
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            if (displayWeek != actualWeek) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        scope.launch { pagerState.animateScrollToPage(actualWeek - 1) }
+                    }
+                ) {
+                    Icon(Icons.Default.Today, contentDescription = "回本周")
+                }
+            }
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 8.dp, top = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "我的课表",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = onImportClick) {
-                    Icon(
-                        Icons.Default.FileOpen,
-                        contentDescription = "导入课表",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
+            CompactTopBar(
+                weekNumber = displayWeek,
+                dateRange = WeekCalculator.weekDateRange(semester.startDate, displayWeek),
+                isCurrentWeek = displayWeek == actualWeek,
+                onImportClick = onImportClick
+            )
 
-            if (semester != null) {
-                // Week selector
-                WeekSelector(
-                    currentWeek = selectedWeek,
-                    isCurrentWeek = selectedWeek == actualWeek,
-                    onPreviousWeek = onPreviousWeek,
-                    onNextWeek = onNextWeek,
-                    onJumpToCurrentWeek = onJumpToCurrentWeek
-                )
+            HorizontalPager(
+                state = pagerState,
+                beyondBoundsPageCount = 2,
+                modifier = Modifier.weight(1f)
+            ) { page ->
+                val weekNumber = page + 1
+                val courses = remember(weekNumber) { getCoursesForWeek(weekNumber) }
+                val weekStart = remember(weekNumber) { WeekCalculator.weekStartDate(semester.startDate, weekNumber) }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Grid
                 WeekGrid(
                     courses = courses,
-                    todayDayOfWeek = if (selectedWeek == actualWeek) WeekCalculator.todayDayOfWeek() else 0,
-                    showWeekend = showWeekend,
+                    todayDayOfWeek = if (weekNumber == actualWeek) WeekCalculator.todayDayOfWeek() else 0,
                     onCourseClick = onCourseClick,
-                    modifier = Modifier.weight(1f)
+                    weekStartDate = weekStart,
+                    currentSlot = if (weekNumber == actualWeek) currentSlot else null,
+                    modifier = Modifier.fillMaxSize()
                 )
-            } else {
-                // Empty state
-                EmptyState(onImportClick = onImportClick)
             }
         }
 
@@ -128,9 +138,12 @@ fun WeekGridScreen(
 }
 
 @Composable
-private fun EmptyState(onImportClick: () -> Unit) {
+private fun EmptyState(
+    onImportClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -138,14 +151,14 @@ private fun EmptyState(onImportClick: () -> Unit) {
     ) {
         Text(
             text = "还没有课表",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
+            style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+            color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "从教务系统下载课表 (.xls)，然后导入到这里",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(24.dp))
         androidx.compose.material3.FilledTonalButton(onClick = onImportClick) {

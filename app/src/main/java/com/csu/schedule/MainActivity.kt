@@ -39,15 +39,10 @@ fun ScheduleApp(viewModel: ScheduleViewModel = viewModel()) {
         when (screen) {
             Screen.WeekGrid -> WeekGridScreen(
                 semester = viewModel.semester,
-                courses = viewModel.filteredCourses,
-                selectedWeek = viewModel.selectedWeek,
                 actualWeek = viewModel.actualWeek,
-                showWeekend = viewModel.showWeekend,
                 importState = viewModel.importState,
                 onImportClick = { viewModel.navigateTo(Screen.Import) },
-                onPreviousWeek = viewModel::previousWeek,
-                onNextWeek = viewModel::nextWeek,
-                onJumpToCurrentWeek = viewModel::jumpToCurrentWeek,
+                getCoursesForWeek = { week -> viewModel.coursesForWeek(week) },
                 onCourseClick = { viewModel.selectCourse(it) },
                 onImportStateConsumed = viewModel::resetImportState,
                 selectedCourse = viewModel.selectedCourse,

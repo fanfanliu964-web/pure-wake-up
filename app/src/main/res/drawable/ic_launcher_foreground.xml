@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Grid lines -->
+    <path
+        android:pathData="M30,36 L78,36"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2D5DAA"
+        android:strokeAlpha="0.3"/>
+    <path
+        android:pathData="M30,48 L78,48"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2D5DAA"
+        android:strokeAlpha="0.3"/>
+    <path
+        android:pathData="M30,60 L78,60"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2D5DAA"
+        android:strokeAlpha="0.3"/>
+    <path
+        android:pathData="M30,72 L78,72"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2D5DAA"
+        android:strokeAlpha="0.3"/>
+
+    <path
+        android:pathData="M42,30 L42,78"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2D5DAA"
+        android:strokeAlpha="0.3"/>
+    <path
+        android:pathData="M54,30 L54,78"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2D5DAA"
+        android:strokeAlpha="0.3"/>
+    <path
+        android:pathData="M66,30 L66,78"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2D5DAA"
+        android:strokeAlpha="0.3"/>
+
+    <!-- Course blocks -->
+    <path
+        android:pathData="M31,37 h10 a2,2 0 0 1 2,2 v7 a2,2 0 0 1 -2,2 h-10 a2,2 0 0 1 -2,-2 v-7 a2,2 0 0 1 2,-2z"
+        android:fillColor="#D4E4FF"/>
+    <path
+        android:pathData="M55,49 h10 a2,2 0 0 1 2,2 v7 a2,2 0 0 0 -2,2 h-10 a2,2 0 0 1 -2,-2 v-7 a2,2 0 0 1 2,-2z"
+        android:fillColor="#D4FFD6"/>
+    <path
+        android:pathData="M43,61 h10 a2,2 0 0 1 2,2 v7 a2,2 0 0 1 -2,2 h-10 a2,2 0 0 1 -2,-2 v-7 a2,2 0 0 1 2,-2z"
+        android:fillColor="#E8D4FF"/>
+    <path
+        android:pathData="M67,37 h10 a2,2 0 0 1 2,2 v7 a2,2 0 0 1 -2,2 h-10 a2,2 0 0 1 -2,-2 v-7 a2,2 0 0 1 2,-2z"
+        android:fillColor="#FFE8D4"/>
+
+</vector>

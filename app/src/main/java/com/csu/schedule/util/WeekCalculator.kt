@@ -26,4 +26,16 @@ object WeekCalculator {
             DayOfWeek.SUNDAY -> 7
         }
     }
+
+    fun weekStartDate(semesterStartDate: String, weekNumber: Int): LocalDate {
+        val start = LocalDate.parse(semesterStartDate, DateTimeFormatter.ISO_LOCAL_DATE)
+        return start.plusWeeks((weekNumber - 1).toLong())
+    }
+
+    fun weekDateRange(semesterStartDate: String, weekNumber: Int): String {
+        val mon = weekStartDate(semesterStartDate, weekNumber)
+        val sun = mon.plusDays(6)
+        val fmt = DateTimeFormatter.ofPattern("M/d")
+        return "${mon.format(fmt)}-${sun.format(fmt)}"
+    }
 }

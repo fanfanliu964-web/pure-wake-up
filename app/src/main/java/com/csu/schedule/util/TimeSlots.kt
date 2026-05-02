@@ -1,5 +1,8 @@
 package com.csu.schedule.util
 
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+
 data class TimeRange(val startTime: String, val endTime: String)
 
 object TimeSlots {
@@ -24,4 +27,15 @@ object TimeSlots {
     )
 
     val slotPairs = listOf(1 to 2, 3 to 4, 5 to 6, 7 to 8, 9 to 10, 11 to 12)
+
+    private val timeFmt = DateTimeFormatter.ofPattern("HH:mm")
+
+    fun currentSection(now: LocalTime = LocalTime.now()): Int? {
+        for ((section, range) in schedule) {
+            val start = LocalTime.parse(range.startTime, timeFmt)
+            val end = LocalTime.parse(range.endTime, timeFmt)
+            if (!now.isBefore(start) && !now.isAfter(end)) return section
+        }
+        return null
+    }
 }

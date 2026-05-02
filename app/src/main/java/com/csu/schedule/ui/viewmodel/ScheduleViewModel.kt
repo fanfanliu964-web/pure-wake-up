@@ -38,6 +38,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     var filteredCourses by mutableStateOf<List<CourseEntity>>(emptyList())
         private set
 
+    var weekCourseMap by mutableStateOf<Map<Int, List<CourseEntity>>>(emptyMap())
+        private set
+
     var selectedWeek by mutableIntStateOf(1)
         private set
 
@@ -68,6 +71,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     allCourses = courses
                     updateFilteredCourses()
                     checkWeekendCourses()
+                    precomputeWeekCourseMap()
                 }
         }
     }
@@ -134,6 +138,16 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun resetImportState() {
         importState = ImportState.Idle
+    }
+
+    fun coursesForWeek(week: Int): List<CourseEntity> =
+        weekCourseMap[week] ?: emptyList()
+
+    private fun precomputeWeekCourseMap() {
+        val total = semester?.totalWeeks ?: 20
+        weekCourseMap = (1..total).associateWith { week ->
+            repository.filterCoursesForWeek(allCourses, week)
+        }
     }
 
     private fun updateFilteredCourses() {
