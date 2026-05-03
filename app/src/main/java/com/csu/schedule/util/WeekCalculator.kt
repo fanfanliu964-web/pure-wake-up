@@ -35,7 +35,7 @@ object WeekCalculator {
     fun weekDateRange(semesterStartDate: String, weekNumber: Int): String {
         val mon = weekStartDate(semesterStartDate, weekNumber)
         val sun = mon.plusDays(6)
-        val fmt = DateTimeFormatter.ofPattern("M/d")
+        val fmt = DateTimeFormatter.ofPattern("M.d")
         return "${mon.format(fmt)}-${sun.format(fmt)}"
     }
 }

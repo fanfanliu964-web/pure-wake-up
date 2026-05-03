@@ -39,7 +39,7 @@ private val HEADER_HEIGHT = 60.dp
 
 private val DAY_LABELS = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 private val SLOT_LABELS = listOf("1-2", "3-4", "5-6", "7-8", "9-10", "11-12")
-private val DATE_FMT = DateTimeFormatter.ofPattern("M/d")
+private val DATE_FMT = DateTimeFormatter.ofPattern("M.d")
 
 @Composable
 fun WeekGrid(

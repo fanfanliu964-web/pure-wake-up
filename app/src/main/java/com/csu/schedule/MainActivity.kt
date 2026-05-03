@@ -39,6 +39,7 @@ fun ScheduleApp(viewModel: ScheduleViewModel = viewModel()) {
         when (screen) {
             Screen.WeekGrid -> WeekGridScreen(
                 semester = viewModel.semester,
+                isInitialLoadComplete = viewModel.isInitialLoadComplete,
                 actualWeek = viewModel.actualWeek,
                 importState = viewModel.importState,
                 onImportClick = { viewModel.navigateTo(Screen.Import) },

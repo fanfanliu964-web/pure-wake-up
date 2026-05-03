@@ -1,6 +1,5 @@
 package com.csu.schedule.ui.screen.weekgrid
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Today
@@ -20,7 +20,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -37,6 +39,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun WeekGridScreen(
     semester: SemesterEntity?,
+    isInitialLoadComplete: Boolean,
     actualWeek: Int,
     importState: ImportState,
     onImportClick: () -> Unit,
@@ -65,10 +68,14 @@ fun WeekGridScreen(
 
     if (semester == null) {
         Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-            EmptyState(
-                onImportClick = onImportClick,
-                modifier = Modifier.padding(padding)
-            )
+            if (isInitialLoadComplete) {
+                EmptyState(
+                    onImportClick = onImportClick,
+                    modifier = Modifier.padding(padding)
+                )
+            } else {
+                LoadingState(modifier = Modifier.padding(padding))
+            }
         }
         return
     }
@@ -78,17 +85,19 @@ fun WeekGridScreen(
         initialPage = (actualWeek - 1).coerceIn(0, totalWeeks - 1)
     ) { totalWeeks }
 
-    val currentSlot by rememberCurrentSlot()
-
-    val displayWeek = pagerState.currentPage + 1
+    val currentWeekPage = (actualWeek - 1).coerceIn(0, totalWeeks - 1)
+    val displayWeek by remember {
+        derivedStateOf { pagerState.settledPage + 1 }
+    }
+    val isCurrentWeek = pagerState.settledPage == currentWeekPage
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            if (displayWeek != actualWeek) {
+            if (!isCurrentWeek) {
                 SmallFloatingActionButton(
                     onClick = {
-                        scope.launch { pagerState.animateScrollToPage(actualWeek - 1) }
+                        scope.launch { pagerState.animateScrollToPage(currentWeekPage) }
                     }
                 ) {
                     Icon(Icons.Default.Today, contentDescription = "回本周")
@@ -104,25 +113,21 @@ fun WeekGridScreen(
             CompactTopBar(
                 weekNumber = displayWeek,
                 dateRange = WeekCalculator.weekDateRange(semester.startDate, displayWeek),
-                isCurrentWeek = displayWeek == actualWeek,
+                isCurrentWeek = isCurrentWeek,
                 onImportClick = onImportClick
             )
 
             HorizontalPager(
                 state = pagerState,
-                beyondBoundsPageCount = 2,
+                beyondViewportPageCount = 2,
                 modifier = Modifier.weight(1f)
             ) { page ->
-                val weekNumber = page + 1
-                val courses = remember(weekNumber) { getCoursesForWeek(weekNumber) }
-                val weekStart = remember(weekNumber) { WeekCalculator.weekStartDate(semester.startDate, weekNumber) }
-
-                WeekGrid(
-                    courses = courses,
-                    todayDayOfWeek = if (weekNumber == actualWeek) WeekCalculator.todayDayOfWeek() else 0,
+                WeekPage(
+                    page = page,
+                    actualWeek = actualWeek,
+                    semester = semester,
+                    getCoursesForWeek = getCoursesForWeek,
                     onCourseClick = onCourseClick,
-                    weekStartDate = weekStart,
-                    currentSlot = if (weekNumber == actualWeek) currentSlot else null,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -134,6 +139,27 @@ fun WeekGridScreen(
                 onDismiss = onDismissDetail
             )
         }
+    }
+}
+
+@Composable
+private fun LoadingState(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+    ) {
+        CircularProgressIndicator()
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "正在加载课表...",
+            style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -167,4 +193,28 @@ private fun EmptyState(
             Text("导入课表")
         }
     }
+}
+
+@Composable
+private fun WeekPage(
+    page: Int,
+    actualWeek: Int,
+    semester: SemesterEntity,
+    getCoursesForWeek: (Int) -> List<CourseEntity>,
+    onCourseClick: (CourseEntity) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val weekNumber = page + 1
+    val courses = getCoursesForWeek(weekNumber)
+    val weekStart = remember(weekNumber) { WeekCalculator.weekStartDate(semester.startDate, weekNumber) }
+    val currentSlot by if (weekNumber == actualWeek) rememberCurrentSlot() else remember { mutableStateOf(null) }
+
+    WeekGrid(
+        courses = courses,
+        todayDayOfWeek = if (weekNumber == actualWeek) WeekCalculator.todayDayOfWeek() else 0,
+        onCourseClick = onCourseClick,
+        weekStartDate = weekStart,
+        currentSlot = currentSlot,
+        modifier = modifier
+    )
 }

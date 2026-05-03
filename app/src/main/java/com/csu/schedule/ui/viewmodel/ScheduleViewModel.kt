@@ -14,12 +14,13 @@ import com.csu.schedule.data.db.SemesterEntity
 import com.csu.schedule.data.repository.ScheduleRepository
 import com.csu.schedule.ui.screen.Screen
 import com.csu.schedule.util.WeekCalculator
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = ScheduleRepository(
@@ -53,15 +54,24 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     var importState by mutableStateOf<ImportState>(ImportState.Idle)
         private set
 
+    var isInitialLoadComplete by mutableStateOf(false)
+        private set
+
     var showWeekend by mutableStateOf(false)
         private set
 
     init {
         viewModelScope.launch {
             repository.getActiveSemester()
-                .filterNotNull()
                 .flatMapLatest { sem ->
                     semester = sem
+                    if (sem == null) {
+                        allCourses = emptyList()
+                        filteredCourses = emptyList()
+                        weekCourseMap = emptyMap()
+                        isInitialLoadComplete = true
+                        return@flatMapLatest flowOf(emptyList())
+                    }
                     val week = WeekCalculator.currentWeek(sem.startDate) ?: 1
                     actualWeek = week
                     selectedWeek = week
@@ -72,6 +82,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     updateFilteredCourses()
                     checkWeekendCourses()
                     precomputeWeekCourseMap()
+                    isInitialLoadComplete = true
                 }
         }
     }

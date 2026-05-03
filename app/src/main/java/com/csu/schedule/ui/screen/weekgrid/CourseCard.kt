@@ -51,7 +51,7 @@ fun CourseCard(
                 style = MaterialTheme.typography.labelSmall,
                 color = color.text,
                 fontWeight = FontWeight.SemiBold,
-                maxLines = 3,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
             if (course.classroom.isNotBlank()) {
@@ -59,7 +59,7 @@ fun CourseCard(
                     text = course.classroom,
                     style = MaterialTheme.typography.labelSmall,
                     color = color.text.copy(alpha = 0.7f),
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
