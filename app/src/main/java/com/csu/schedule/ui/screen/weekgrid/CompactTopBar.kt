@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +27,8 @@ fun CompactTopBar(
     weekNumber: Int,
     dateRange: String,
     isCurrentWeek: Boolean,
-    onImportClick: () -> Unit
+    onImportClick: () -> Unit,
+    onManageClick: () -> Unit
 ) {
     Surface(
         tonalElevation = 0.dp,
@@ -79,6 +81,13 @@ fun CompactTopBar(
                 Icon(
                     Icons.Default.FileOpen,
                     contentDescription = "导入课表",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            IconButton(onClick = onManageClick) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "管理课表",
                     tint = MaterialTheme.colorScheme.primary
                 )
             }

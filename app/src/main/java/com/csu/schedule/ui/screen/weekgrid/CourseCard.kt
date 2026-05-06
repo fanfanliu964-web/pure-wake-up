@@ -24,8 +24,8 @@ import com.csu.schedule.ui.theme.CourseColorsDark
 @Composable
 fun CourseCard(
     course: CourseEntity,
-    isCurrent: Boolean = false,
     modifier: Modifier = Modifier,
+    isCurrent: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     val palette = if (isSystemInDarkTheme()) CourseColorsDark else CourseColors

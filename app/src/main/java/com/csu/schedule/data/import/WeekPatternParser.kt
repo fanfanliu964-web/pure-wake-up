@@ -5,7 +5,15 @@ object WeekPatternParser {
     fun parse(pattern: String): Set<Int> {
         if (pattern.isBlank()) return emptySet()
 
-        var cleaned = pattern.replace(Regex("\\(.*?\\)"), "").trim()
+        var cleaned = pattern
+            .replace(Regex("[（(].*?[）)]"), "")
+            .replace("，", ",")
+            .replace("、", ",")
+            .replace("－", "-")
+            .replace("—", "-")
+            .replace("–", "-")
+            .replace("第", "")
+            .trim()
 
         val oddOnly = cleaned.contains("单")
         val evenOnly = cleaned.contains("双")
@@ -40,5 +48,14 @@ object WeekPatternParser {
             evenOnly -> weeks.filter { it % 2 == 0 }.toSet()
             else -> weeks
         }
+    }
+
+    fun parseOrAll(pattern: String, totalWeeks: Int): Set<Int> {
+        val parsed = parse(pattern)
+        return parsed.ifEmpty { (1..totalWeeks).toSet() }
+    }
+
+    fun containsWeek(pattern: String, week: Int, totalWeeks: Int): Boolean {
+        return parseOrAll(pattern, totalWeeks).contains(week)
     }
 }

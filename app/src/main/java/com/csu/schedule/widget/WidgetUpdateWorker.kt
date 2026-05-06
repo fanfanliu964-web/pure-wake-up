@@ -7,6 +7,9 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 class WidgetUpdateWorker(
@@ -24,14 +27,22 @@ class WidgetUpdateWorker(
 
         fun schedule(context: Context) {
             val request = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(
-                15, TimeUnit.MINUTES
-            ).build()
+                1, TimeUnit.DAYS
+            )
+                .setInitialDelay(delayUntilNextMidnightMillis(), TimeUnit.MILLISECONDS)
+                .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 request
             )
+        }
+
+        private fun delayUntilNextMidnightMillis(): Long {
+            val now = LocalDateTime.now()
+            val nextMidnight = LocalDate.now().plusDays(1).atStartOfDay()
+            return Duration.between(now, nextMidnight).toMillis().coerceAtLeast(0L)
         }
     }
 }

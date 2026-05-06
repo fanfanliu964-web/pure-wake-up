@@ -16,7 +16,11 @@ object WeekCalculator {
     }
 
     fun todayDayOfWeek(): Int {
-        return when (LocalDate.now().dayOfWeek) {
+        return dayOfWeek(LocalDate.now())
+    }
+
+    fun dayOfWeek(date: LocalDate): Int {
+        return when (date.dayOfWeek) {
             DayOfWeek.MONDAY -> 1
             DayOfWeek.TUESDAY -> 2
             DayOfWeek.WEDNESDAY -> 3

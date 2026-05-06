@@ -93,6 +93,17 @@ else
 Please set the JAVA_HOME variable in your environment to match the
 location of your Java installation."
     fi
+    if ! "$JAVACMD" -version >/dev/null 2>&1 ; then
+        ANDROID_STUDIO_JBR="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java"
+        if "$darwin" && [ -x "$ANDROID_STUDIO_JBR" ] ; then
+            JAVACMD=$ANDROID_STUDIO_JBR
+        else
+            die "ERROR: JAVA_HOME is not set and the 'java' command in your PATH is not usable.
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+        fi
+    fi
 fi
 
 # Increase the maximum file descriptors if we can.

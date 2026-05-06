@@ -1,10 +1,13 @@
 package com.csu.schedule.widget
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.action.clickable
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
@@ -18,7 +21,6 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
 import com.csu.schedule.data.db.CourseEntity
 import com.csu.schedule.util.TimeSlots
 
@@ -28,7 +30,10 @@ private val DAY_NAMES = listOf("", "周一", "周二", "周三", "周四", "周�
 fun WidgetContent(
     weekNumber: Int,
     dayOfWeek: Int,
-    courses: List<CourseEntity>
+    courses: List<CourseEntity>,
+    status: WidgetCourseStatus,
+    hasSchedule: Boolean,
+    intentForCourse: (Long) -> Intent
 ) {
     val dayName = DAY_NAMES.getOrElse(dayOfWeek) { "" }
 
@@ -39,7 +44,7 @@ fun WidgetContent(
             .padding(12.dp)
     ) {
         Text(
-            text = "今日课程 · 第${weekNumber}周 · $dayName",
+            text = if (hasSchedule && !status.isOutOfTerm) "今日课程 · 第${weekNumber}周 · $dayName" else "今日课程",
             style = TextStyle(
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
@@ -49,41 +54,111 @@ fun WidgetContent(
 
         Spacer(modifier = GlanceModifier.height(8.dp))
 
-        if (courses.isEmpty()) {
-            Column(
-                modifier = GlanceModifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "今天没有课",
-                    style = TextStyle(
-                        fontSize = 15.sp,
-                        color = GlanceTheme.colors.onSurfaceVariant
-                    )
-                )
-            }
+        if (status.course != null) {
+            HighlightCourse(status, intentForCourse)
+            Spacer(modifier = GlanceModifier.height(6.dp))
+        } else if (!hasSchedule || status.isOutOfTerm || courses.isEmpty()) {
+            EmptyWidgetMessage(status.label)
+            return@Column
         } else {
-            courses.forEach { course ->
-                WidgetCourseItem(course)
-                Spacer(modifier = GlanceModifier.height(4.dp))
-            }
+            Text(
+                text = status.label,
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = GlanceTheme.colors.onSurfaceVariant
+                )
+            )
+            Spacer(modifier = GlanceModifier.height(6.dp))
+        }
+
+        courses.take(4).forEach { course ->
+            WidgetCourseItem(course, intentForCourse(course.id))
+            Spacer(modifier = GlanceModifier.height(4.dp))
         }
     }
 }
 
 @Composable
-private fun WidgetCourseItem(course: CourseEntity) {
+private fun HighlightCourse(
+    status: WidgetCourseStatus,
+    intentForCourse: (Long) -> Intent
+) {
+    val course = status.course ?: return
+    Column(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .background(GlanceTheme.colors.primaryContainer)
+            .clickable(actionStartActivity(intentForCourse(course.id)))
+            .padding(8.dp)
+    ) {
+        Text(
+            text = status.label,
+            style = TextStyle(
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = GlanceTheme.colors.onPrimaryContainer
+            )
+        )
+        Text(
+            text = course.courseName,
+            style = TextStyle(
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = GlanceTheme.colors.onPrimaryContainer
+            )
+        )
+        val timeRange = TimeSlots.rangeFor(course.startSection, course.endSection)
+        Text(
+            text = "${timeRange.startTime}-${timeRange.endTime}"
+                + if (course.classroom.isNotBlank()) " · ${course.classroom}" else "",
+            style = TextStyle(
+                fontSize = 12.sp,
+                color = GlanceTheme.colors.onPrimaryContainer
+            )
+        )
+        if (status.detail.isNotBlank()) {
+            Text(
+                text = status.detail,
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    color = GlanceTheme.colors.onPrimaryContainer
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyWidgetMessage(message: String) {
+    Column(
+        modifier = GlanceModifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = message,
+            style = TextStyle(
+                fontSize = 15.sp,
+                color = GlanceTheme.colors.onSurfaceVariant
+            )
+        )
+    }
+}
+
+@Composable
+private fun WidgetCourseItem(course: CourseEntity, intent: Intent) {
     val timeRange = TimeSlots.rangeFor(course.startSection, course.endSection)
 
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
+            .clickable(actionStartActivity(intent))
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "${timeRange.startTime}",
+            text = timeRange.startTime,
             style = TextStyle(
                 fontSize = 12.sp,
                 color = GlanceTheme.colors.onSurfaceVariant

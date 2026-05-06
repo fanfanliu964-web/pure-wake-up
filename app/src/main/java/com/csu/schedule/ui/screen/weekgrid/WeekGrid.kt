@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -46,9 +49,10 @@ fun WeekGrid(
     courses: List<CourseEntity>,
     todayDayOfWeek: Int,
     onCourseClick: (CourseEntity) -> Unit,
+    onSlotCoursesClick: (List<CourseEntity>) -> Unit,
+    modifier: Modifier = Modifier,
     weekStartDate: LocalDate? = null,
-    currentSlot: CurrentSlot? = null,
-    modifier: Modifier = Modifier
+    currentSlot: CurrentSlot? = null
 ) {
     val dayCount = 7
     val courseMap = buildCourseMap(courses)
@@ -168,8 +172,30 @@ fun WeekGrid(
                                 course = course,
                                 isCurrent = isCurrent,
                                 modifier = Modifier.fillMaxSize(),
-                                onClick = { onCourseClick(course) }
+                                onClick = {
+                                    if (coursesInSlot.size == 1) {
+                                        onCourseClick(course)
+                                    } else {
+                                        onSlotCoursesClick(coursesInSlot)
+                                    }
+                                }
                             )
+                            if (coursesInSlot.size > 1) {
+                                Surface(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(3.dp),
+                                    shape = RoundedCornerShape(99.dp),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ) {
+                                    Text(
+                                        text = "+${coursesInSlot.size - 1}",
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
                         }
                     }
                 }

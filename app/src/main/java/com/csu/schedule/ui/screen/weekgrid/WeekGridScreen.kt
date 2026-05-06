@@ -42,11 +42,16 @@ fun WeekGridScreen(
     isInitialLoadComplete: Boolean,
     actualWeek: Int,
     importState: ImportState,
+    message: String?,
     onImportClick: () -> Unit,
+    onManageClick: () -> Unit,
     getCoursesForWeek: (Int) -> List<CourseEntity>,
     onCourseClick: (CourseEntity) -> Unit,
+    onSlotCoursesClick: (List<CourseEntity>) -> Unit,
     onImportStateConsumed: () -> Unit,
+    onMessageConsumed: () -> Unit,
     selectedCourse: CourseEntity?,
+    slotCourses: List<CourseEntity>,
     onDismissDetail: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -63,6 +68,12 @@ fun WeekGridScreen(
                 onImportStateConsumed()
             }
             else -> {}
+        }
+    }
+    LaunchedEffect(message) {
+        if (message != null) {
+            snackbarHostState.showSnackbar(message)
+            onMessageConsumed()
         }
     }
 
@@ -86,6 +97,10 @@ fun WeekGridScreen(
     ) { totalWeeks }
 
     val currentWeekPage = (actualWeek - 1).coerceIn(0, totalWeeks - 1)
+    LaunchedEffect(semester.id, currentWeekPage) {
+        pagerState.scrollToPage(currentWeekPage)
+    }
+
     val displayWeek by remember {
         derivedStateOf { pagerState.settledPage + 1 }
     }
@@ -114,7 +129,8 @@ fun WeekGridScreen(
                 weekNumber = displayWeek,
                 dateRange = WeekCalculator.weekDateRange(semester.startDate, displayWeek),
                 isCurrentWeek = isCurrentWeek,
-                onImportClick = onImportClick
+                onImportClick = onImportClick,
+                onManageClick = onManageClick
             )
 
             HorizontalPager(
@@ -128,6 +144,7 @@ fun WeekGridScreen(
                     semester = semester,
                     getCoursesForWeek = getCoursesForWeek,
                     onCourseClick = onCourseClick,
+                    onSlotCoursesClick = onSlotCoursesClick,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -137,6 +154,17 @@ fun WeekGridScreen(
             CourseDetailSheet(
                 course = selectedCourse,
                 onDismiss = onDismissDetail
+            )
+        }
+
+        if (slotCourses.isNotEmpty()) {
+            SlotCoursesSheet(
+                courses = slotCourses,
+                onCourseClick = { course ->
+                    onSlotCoursesClick(emptyList())
+                    onCourseClick(course)
+                },
+                onDismiss = { onSlotCoursesClick(emptyList()) }
             )
         }
     }
@@ -202,6 +230,7 @@ private fun WeekPage(
     semester: SemesterEntity,
     getCoursesForWeek: (Int) -> List<CourseEntity>,
     onCourseClick: (CourseEntity) -> Unit,
+    onSlotCoursesClick: (List<CourseEntity>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val weekNumber = page + 1
@@ -213,6 +242,7 @@ private fun WeekPage(
         courses = courses,
         todayDayOfWeek = if (weekNumber == actualWeek) WeekCalculator.todayDayOfWeek() else 0,
         onCourseClick = onCourseClick,
+        onSlotCoursesClick = onSlotCoursesClick,
         weekStartDate = weekStart,
         currentSlot = currentSlot,
         modifier = modifier

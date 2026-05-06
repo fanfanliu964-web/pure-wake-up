@@ -118,4 +118,28 @@ class WeekPatternParserTest {
             WeekPatternParser.parse("1-10周(32学时)")
         )
     }
+
+    @Test
+    fun `full width separators and parentheses`() {
+        assertEquals(
+            setOf(1, 2, 3, 4, 5, 6, 8),
+            WeekPatternParser.parse("第1－6，8周（32学时）")
+        )
+    }
+
+    @Test
+    fun `parse or all falls back to whole semester for blank pattern`() {
+        assertEquals(
+            setOf(1, 2, 3, 4),
+            WeekPatternParser.parseOrAll("", totalWeeks = 4)
+        )
+    }
+
+    @Test
+    fun `contains week falls back to whole semester for invalid pattern`() {
+        assertEquals(
+            true,
+            WeekPatternParser.containsWeek("无法解析", week = 3, totalWeeks = 4)
+        )
+    }
 }
